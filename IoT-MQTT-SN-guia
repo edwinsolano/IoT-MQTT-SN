@@ -1,0 +1,149 @@
+ssh solano@strasbourg.iot-lab.info
+cd iot-lab/parts/RIOT/examples/gnrc_border_router
+source /opt/riot.source
+make ETHOS_BAUDRATE=115200 DEFAULT_SUBGHZ_CHANNEL=0 BOARD=openmote-b clean all
+scp solano@strasbourg.iot-lab.info:/senslab/users/solano/iot-lab/parts/RIOT/examples/gnrc_border_router/bin/openmote-b/gnrc_border_router.elf /home/edwin/Escritorio/examen/gnrc_border_router.elf
+***crear experimento a8, 3 openmoteb
+***flashear open mote router de borde
+sudo ethos_uhcpd.py openmoteb-36 tap0 2a07:2e40:fffe:00f9::/64
+
+
+
+**copiar repositorio en carpeta raiz**
+git clone https://github.com/Francesco31Ott/InternetOfThings19-20.git
+
+solano@strasbourg:~/InternetOfThings19-20/SecondAssignment$ 
+cp -R emcute_MQTTSN/ ../../iot-lab/parts/RIOT/examples/.
+
+solano@strasbourg:~/iot-lab/parts/RIOT/examples/emcute_MQTTSN$ 
+source /opt/riot.source
+make DEFAULT_SUBGHZ_CHANNEL=0 BOARD=openmote-b EMCUTE_ID=station1 clean all
+
+scp solano@strasbourg.iot-lab.info:/senslab/users/solano/iot-lab/parts/RIOT/examples/emcute_MQTTSN/bin/openmote-b/emcute_mqttsn.elf /home/edwin/Escritorio/examen/emcute_mqttsn_ST2.elf
+
+*****flashear en los dos nodos*******
+
+nc openmoteb-39 20000   ***para los dos nodos numero de nodo
+ssh root@node-a8-5      *** para el broker numero de nodo
+
+vim config.conf    *** en a8
+
+# add some debug output
+trace_output protocol
+# listen for MQTT-SN traffic on UDP port 1885
+listener 1885 INADDR_ANY mqtts
+ipv6 true
+# listen to MQTT connections on tcp port 1886
+listener 1886 INADDR_ANY
+ipv6 true
+
+
+:wq  **para gurdar y salir
+
+broker_mqtts config.conf  **configmar que quede lanzado 
+
+2a07:2e40:fffe:c0::a  direccion ip del a8
+
+start 2a07:2e40:fffe:c0::a 1885 1  **stacion 1
+start 2a07:2e40:fffe:c0::a 1885 2  **stacion 2
+
+
+
+
+-------------------------------------------------------------------------------------
+nodo a8
+-----------------------------
+
+pip3 install AWSIoTPythonSDK
+mkdir -p ~/.aws
+cd ~/.aws
+touch config credentials
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip   
+./aws/install
+cd
+git clone https://github.com/Francesco31Ott/InternetOfThings19-20.git
+cd InternetOfThings19-20/SecondAssignment/
+mkdir -p certs
+cd
+
+
+
+---------------------------------------------------------------------------------
+nodo a8
+-----------------------
+
+git clone https://github.com/edwinsolano/iotexamen.git
+cd <tu-repo>/
+cp * ../InternetOfThings19-20/SecondAssignment/certs/.
+cd ../InternetOfThings19-20/SecondAssignment/certs/
+chmod 775 AmazonRootCA1.pem
+cd ~/.aws
+vim config
+
+[default]
+region=us-east-2
+output=json
+
+vim credentials
+
+[default]
+aws_access_key_id=AKIATDCEPUL6CYTD6RYZ
+aws_secret_access_key=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
+
+
+---------------------------------------------------------------------------------
+nodo a8
+-------------------------
+
+TMPDIR=/ pip3 install --cache-dir=/ --build / boto3   --o TMPDIR=/ pip3 install --cache-dir=/ --build / boto3=1.15.3
+cd
+cd InternetOfThings19-20/SecondAssignment/client_MQTTSN/
+vim MQTTSNbridge.py
+
+-----------------------------------------------------
+
+-----------------------------------------------------
+python3 MQTTSNbridge.py
+
+
+###############################
+---------------------------Instancia AWS-----------------------------
+cd /var/www
+sudo mkdir /var/www/romerosolano.com
+sudo chown -R $USER:$USER /var/www/romerosolano.com
+sudo chmod -R 755 /var/www/romerosolano.com
+
+git clone https://github.com/Francesco31Ott/InternetOfThings19-20.git
+cd /home/edwin/InternetOfThings19-20/FirstAssignment/WebApp
+cp -r * /var/www/romerosolano.com
+cd /var/www/romerosolano.com
+cd web
+cp * /var/www/romerosolano.com
+
+
+cd /var/www/romerosolano.com
+cd assets/js 
+nano script.js
+
+
+**********Servidor Web*********
+git clone https://github.com/Francesco31Ott/InternetOfThings19-20.git
+
+sudo nano /etc/apache2/sites-available/romerosolano.com.conf
+
+<VirtualHost *:80>
+ ServerAdmin webmaster@localhost
+ ServerName romerosolano.com
+ DocumentRoot /var/www/romerosolano.com
+ DirectoryIndex dashboard.html
+ ErrorLog ${APACHE_LOG_DIR}/error.log
+ CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+
+
+
+sudo a2ensite romerosolano.com.conf
+sudo a2dissite 000-default.conf
+sudo apache2ctl configtest
+sudo systemctl reload apache2
